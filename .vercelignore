@@ -1,7 +1,7 @@
 tools/
 docs/
-.superpowers/
+legacy/
+supabase/
 README.md
 *.xlsx
 *.py
-*.mjs

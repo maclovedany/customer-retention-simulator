@@ -1,4 +1,5 @@
-"""원자료 엑셀 → data.js (설계안 5.1).
+"""원자료 엑셀 → 화면용 데이터(JSON). 화면의 src/lib/buildData.js와 같은 규칙의 기준 구현이며,
+tools/expected_current.json(테스트 기준값)을 만드는 데 쓴다 (설계안 5.1).
 
 실행: uv run -q --with pandas --with openpyxl python -I build_data.py [엑셀 경로] [출력 경로]
 """
@@ -10,7 +11,7 @@ import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_XLSX = os.path.join(HERE, '..', '..', 'HR플랫폼_B2B구독_더미데이터.xlsx')   # 프로젝트 폴더 옆의 원자료
-DEFAULT_OUT = os.path.join(HERE, '..', 'data.js')
+DEFAULT_OUT = os.path.join(HERE, 'expected_current.json')
 
 REQUIRED = {
     '1_기업회원': ['기업ID', '업종', '규모구분', '가입일', '담당영업', '가입요금제', '결제주기', '결제수단'],
@@ -230,9 +231,7 @@ def main():
     out = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_OUT
     d = build(xlsx)
     with open(out, 'w', encoding='utf-8') as fh:
-        fh.write("(typeof window !== 'undefined' ? window : globalThis).SIM_DATA = ")
-        fh.write(json.dumps(d, ensure_ascii=False, separators=(',', ':')))
-        fh.write(';\n')
+        json.dump(d, fh, ensure_ascii=False, separators=(',', ':'))
     churned = [f for f in d['firms'] if f['churned']]
     n = len(d['firms'])
     print(f"원자료: {d['meta']['source']}  →  {os.path.abspath(out)}")

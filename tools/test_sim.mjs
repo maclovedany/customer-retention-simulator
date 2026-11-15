@@ -1,9 +1,10 @@
 // sim.js 검증. 실행: node tools/test_sim.mjs
-import '../data.js';
-import '../sim.js';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import * as Sim from '../src/lib/sim.js';
+import { buildData } from '../src/lib/buildData.js';
 
-const D = globalThis.SIM_DATA, Sim = globalThis.Sim;
+const D = buildData(JSON.parse(readFileSync(new URL('../src/data/raw.json', import.meta.url), 'utf8')));
 const P = Sim.presets(D.refs);
 const near = (a, b, eps = 1e-6) => assert.ok(Math.abs(a - b) < eps, `${a} != ${b}`);
 const allFinite = (v, path = 'result') => {
