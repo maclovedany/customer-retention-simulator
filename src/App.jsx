@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import EChart from './components/EChart.jsx';
 import Rail from './components/Rail.jsx';
 import { dotOrderOf, dotsOption, flowOption, monthlyOption, readTheme, STATUS_LABEL, typesOption, waterfallOption } from './lib/chartOptions.js';
@@ -39,6 +39,48 @@ function Panel({ area, title, summary, children }) {
   );
 }
 
+// 숫자만 담긴 객체를 이전 값에서 새 값까지 450ms 동안 보간한다 (차트 전환과 같은 길이·곡선).
+function useTween(target) {
+  const [shown, setShown] = useState(target);
+  const last = useRef(target);
+  useEffect(() => {
+    const from = last.current, t0 = performance.now();
+    if (from === target) return undefined;
+    let raf = requestAnimationFrame(function step(now) {
+      const p = Math.min(1, Math.max(0, (now - t0) / 450)), e = 1 - (1 - p) ** 3;
+      const next = p === 1 ? target : Object.fromEntries(Object.keys(target).map(k => [k, from[k] + (target[k] - from[k]) * e]));
+      last.current = next;
+      setShown(next);
+      if (p < 1) raf = requestAnimationFrame(step);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return shown;
+}
+
+// 지표 카드: 값이 바뀌면 숫자가 이전 값에서 새 값까지 올라가거나 내려간다.
+function Kpis({ r, months }) {
+  const kpi = useTween(r.kpi);
+  return (
+    <section className="kpis" aria-label="핵심 지표">
+      <RateKpi title={`${months}개월 유지율`} now={kpi.retention} base={r.baseline.retention} digits={1} goodWhen={1} />
+      <RateKpi title="월평균 이탈률" now={kpi.monthlyChurn} base={r.baseline.monthlyChurn} digits={2} goodWhen={-1} />
+      <RateKpi title="연 결제 재계약률" now={kpi.renewalRate} base={r.baseline.renewalRate} digits={1} goodWhen={1} />
+      <Kpi money title="방어한 월 매출 (MRR)" value={won(kpi.savedMrr)} active={kpi.savedMrr > 0}
+        sub={`해지로 잃던 ${won(r.churnMrr.base)} 중 ${pct(r.churnMrr.base ? kpi.savedMrr / r.churnMrr.base : 0, 0)}`} />
+      <Kpi money title={`${months}개월 누적 방어 매출`} value={won(kpi.savedRevenue)} active={kpi.savedRevenue > 0}
+        sub={`방어 기업 ${one(kpi.savedCount)}개사의 남은 기간 구독료`} />
+    </section>
+  );
+}
+
+// 흐름도(sankey)는 ECharts가 갱신 때 통째로 다시 그려 전환이 없다. 값을 직접 보간해 프레임마다 다시 그린다.
+function FlowChart({ flow, theme }) {
+  const shown = useTween(flow);
+  const build = useCallback(() => flowOption({ flow: shown }, theme), [shown, theme]);
+  return <EChart build={build} replace label="자발 해지 요청의 상담과 방어 흐름" />;
+}
+
 function Dashboard({ data, load, loading, onReload }) {
   const levers = useMemo(() => leversOf(data.refs), [data]);
   const presets = useMemo(() => presetsOf(data.refs), [data]);
@@ -75,22 +117,13 @@ function Dashboard({ data, load, loading, onReload }) {
   const buildMonthly = useCallback(() => monthlyOption(r, theme), [r, theme]);
   const buildWaterfall = useCallback(() => waterfallOption(r, theme), [r, theme]);
   const buildTypes = useCallback(() => typesOption(r, theme), [r, theme]);
-  const buildFlow = useCallback(() => flowOption(r, theme), [r, theme]);
 
   return (
     <div className="app">
       <Rail data={data} load={load} loading={loading} levers={levers} values={values} preset={preset}
         onLever={onLever} onPreset={onPreset} onReload={onReload} />
       <main className="stage">
-        <section className="kpis" aria-label="핵심 지표">
-          <RateKpi title={`${months}개월 유지율`} now={r.kpi.retention} base={r.baseline.retention} digits={1} goodWhen={1} />
-          <RateKpi title="월평균 이탈률" now={r.kpi.monthlyChurn} base={r.baseline.monthlyChurn} digits={2} goodWhen={-1} />
-          <RateKpi title="연 결제 재계약률" now={r.kpi.renewalRate} base={r.baseline.renewalRate} digits={1} goodWhen={1} />
-          <Kpi money title="방어한 월 매출 (MRR)" value={won(r.kpi.savedMrr)} active={r.kpi.savedMrr > 0}
-            sub={`해지로 잃던 ${won(r.churnMrr.base)} 중 ${pct(r.churnMrr.base ? r.kpi.savedMrr / r.churnMrr.base : 0, 0)}`} />
-          <Kpi money title={`${months}개월 누적 방어 매출`} value={won(r.kpi.savedRevenue)} active={r.kpi.savedRevenue > 0}
-            sub={`방어 기업 ${one(r.kpi.savedCount)}개사의 남은 기간 구독료`} />
-        </section>
+        <Kpis r={r} months={months} />
 
         <Panel area="dots" title={`${data.firms.length}개 기업, 전략을 적용하면`}
           summary={counts.saved + counts.churned === 0 ? '해지 기업 없음'
@@ -121,7 +154,7 @@ function Dashboard({ data, load, loading, onReload }) {
 
         <Panel area="flow" title="해지 요청 처리 흐름"
           summary={r.flow.requests ? <>요청 {one(r.flow.requests)}건 중 <b>방어 {one(r.flow.saved)}건</b></> : '해지 요청 없음'}>
-          <EChart build={buildFlow} replace label="자발 해지 요청의 상담과 방어 흐름" />
+          <FlowChart flow={r.flow} theme={theme} />
         </Panel>
 
         <footer className="notice">가정 기반 시나리오입니다. 효과 크기는 발표자가 넣은 가정이며 예측이 아닙니다. 교육용 가상 데이터를 사용했습니다.</footer>
