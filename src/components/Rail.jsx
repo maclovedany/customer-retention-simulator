@@ -1,5 +1,6 @@
 import { targetCount } from '../lib/sim.js';
 import { clock, pct } from '../lib/format.js';
+import useTween from '../lib/useTween.js';
 
 const GROUPS = [
   { id: 'A', title: 'A 채용 외 HR 서비스', report: '보고서 개선 방안 1·2' },
@@ -66,6 +67,8 @@ function DataStatus({ load, loading, onReload }) {
 
 export default function Rail({ data, load, loading, levers, values, preset, onLever, onPreset, onReload }) {
   const months = data.meta.months;
+  // 프리셋을 누르면 손잡이가 새 값까지 미끄러진다. 직접 끌 때(preset === null)는 손을 바로 따라간다.
+  const shown = useTween(values, preset === null);
   return (
     <aside className="rail" aria-label="전략 조작부">
       <div className="rail-head">
@@ -85,7 +88,7 @@ export default function Rail({ data, load, loading, levers, values, preset, onLe
           return (
             <div className="group" data-group={g.id} key={g.id}>
               <h3>{g.title}{g.report && <span>{g.report}</span>}</h3>
-              {items.map(l => <Lever key={l.key} lever={l} value={values[l.key]} data={data} onChange={onLever} />)}
+              {items.map(l => <Lever key={l.key} lever={l} value={shown[l.key]} data={data} onChange={onLever} />)}
             </div>
           );
         })}

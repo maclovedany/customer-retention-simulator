@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import EChart from './components/EChart.jsx';
 import Rail from './components/Rail.jsx';
 import { dotOrderOf, dotsOption, flowOption, monthlyOption, readTheme, STATUS_LABEL, typesOption, waterfallOption } from './lib/chartOptions.js';
 import { man, one, pct, won } from './lib/format.js';
 import { loadData } from './lib/loadData.js';
 import { levers as leversOf, presets as presetsOf, run } from './lib/sim.js';
+import useTween from './lib/useTween.js';
 
 const SUPABASE = { url: import.meta.env.VITE_SUPABASE_URL || '', key: import.meta.env.VITE_SUPABASE_ANON_KEY || '' };
 const loadSnapshot = () => import('./data/raw.json').then(m => m.default);
@@ -37,25 +38,6 @@ function Panel({ area, title, summary, children }) {
       {children}
     </section>
   );
-}
-
-// 숫자만 담긴 객체를 이전 값에서 새 값까지 450ms 동안 보간한다 (차트 전환과 같은 길이·곡선).
-function useTween(target) {
-  const [shown, setShown] = useState(target);
-  const last = useRef(target);
-  useEffect(() => {
-    const from = last.current, t0 = performance.now();
-    if (from === target) return undefined;
-    let raf = requestAnimationFrame(function step(now) {
-      const p = Math.min(1, Math.max(0, (now - t0) / 450)), e = 1 - (1 - p) ** 3;
-      const next = p === 1 ? target : Object.fromEntries(Object.keys(target).map(k => [k, from[k] + (target[k] - from[k]) * e]));
-      last.current = next;
-      setShown(next);
-      if (p < 1) raf = requestAnimationFrame(step);
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [target]);
-  return shown;
 }
 
 // 지표 카드: 값이 바뀌면 숫자가 이전 값에서 새 값까지 올라가거나 내려간다.
