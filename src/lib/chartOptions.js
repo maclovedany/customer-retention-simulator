@@ -50,7 +50,7 @@ export function dotsOption(r, t, size, dotOrder) {
     };
   });
   return {
-    animationDurationUpdate: 450,
+    animationDurationUpdate: 450, animationEasingUpdate: 'cubicOut',
     grid: { left: 4, right: 4, top: 4, bottom: 4 },
     xAxis: { type: 'value', show: false, min: -0.5, max: lay.cols - 0.5 },
     yAxis: { type: 'value', show: false, min: -0.5, max: lay.rows - 0.5 },
@@ -71,7 +71,7 @@ export function dotsOption(r, t, size, dotOrder) {
 export function monthlyOption(r, t) {
   var label = function (m) { return m.slice(2).replace('-', '.'); };
   return {
-    animationDurationUpdate: 450, textStyle: textStyle(t),
+    animationDurationUpdate: 450, animationEasingUpdate: 'cubicOut', textStyle: textStyle(t),
     grid: { left: 8, right: 16, top: t.fs * 2.4, bottom: 4, containLabel: true },
     legend: { top: 0, right: 0, itemWidth: 18, itemHeight: 3, textStyle: { color: t.colors['ink-soft'], fontSize: t.fs }, data: ['현재', '전략 적용 후'] },
     tooltip: tooltip(t, {
@@ -103,7 +103,7 @@ export function waterfallOption(r, t) {
   hidden.push(0); shown.push(Math.max(0, after));
   var fills = [t.colors.churned, t.colors['group-a'], t.colors['group-b'], t.colors['group-c'], t.colors.ink];
   return {
-    animationDurationUpdate: 450, textStyle: textStyle(t),
+    animationDurationUpdate: 450, animationEasingUpdate: 'cubicOut', textStyle: textStyle(t),
     grid: { left: 8, right: 8, top: t.fs * 1.8, bottom: 4, containLabel: true },
     tooltip: tooltip(t, { trigger: 'item', formatter: function (p) {
       return p.seriesName === 'gap' ? '' : '<b>' + p.name.replace('\n', ' ') + '</b><br>월 ' + Math.round(p.value).toLocaleString('ko-KR') + '만 원';
@@ -129,7 +129,7 @@ export function waterfallOption(r, t) {
 export function typesOption(r, t) {
   var names = r.byType.map(function (t) { return t.type; });
   return {
-    animationDurationUpdate: 450, textStyle: textStyle(t),
+    animationDurationUpdate: 450, animationEasingUpdate: 'cubicOut', textStyle: textStyle(t),
     grid: { left: 4, right: t.fs * 3, top: t.fs * 2.2, bottom: 0, containLabel: true },
     legend: { top: 0, right: 0, itemWidth: 12, itemHeight: 8, textStyle: { color: t.colors['ink-soft'], fontSize: t.fs }, data: ['현재', '전략 적용 후'] },
     tooltip: tooltip(t, { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: function (ps) {
