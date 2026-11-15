@@ -1,0 +1,7 @@
+tools/
+docs/
+.superpowers/
+README.md
+*.xlsx
+*.py
+*.mjs

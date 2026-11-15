@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>구독 유지·해지 방어 전략 시뮬레이터</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="rail" aria-label="전략 조작부">
+    <div class="rail-head">
+      <h1>해지 방어 전략<br>시뮬레이터</h1>
+      <p id="source-line"></p>
+    </div>
+    <div class="presets" role="group" aria-label="시나리오 프리셋">
+      <button type="button" data-preset="current">현재</button>
+      <button type="button" data-preset="conservative">보수적</button>
+      <button type="button" data-preset="base">기본</button>
+      <button type="button" data-preset="aggressive">적극적</button>
+    </div>
+    <div id="levers" class="levers"></div>
+    <button type="button" id="reset" class="reset">현재 상태로 되돌리기</button>
+  </aside>
+
+  <main class="stage">
+    <section class="kpis" id="kpis" aria-label="핵심 지표"></section>
+
+    <section class="panel panel-dots">
+      <header><h2 id="dots-title">기업별 결과</h2><p id="dots-summary"></p></header>
+      <div class="chart" id="chart-dots"></div>
+      <ul class="legend" id="dots-legend"></ul>
+    </section>
+
+    <section class="panel panel-monthly">
+      <header><h2>월별 이탈률</h2><p id="monthly-summary"></p></header>
+      <div class="chart" id="chart-monthly"></div>
+    </section>
+
+    <section class="panel panel-waterfall">
+      <header><h2>해지로 잃는 월 매출</h2><p id="waterfall-summary"></p></header>
+      <div class="chart" id="chart-waterfall"></div>
+    </section>
+
+    <section class="panel panel-types">
+      <header><h2>해지 유형별 기업 수</h2><p id="types-summary"></p></header>
+      <div class="chart" id="chart-types"></div>
+    </section>
+
+    <section class="panel panel-flow">
+      <header><h2>해지 요청 처리 흐름</h2><p id="flow-summary"></p></header>
+      <div class="chart" id="chart-flow"></div>
+    </section>
+
+    <footer class="notice">가정 기반 시나리오입니다. 효과 크기는 발표자가 넣은 가정이며 예측이 아닙니다. 교육용 가상 데이터를 사용했습니다.</footer>
+  </main>
+</div>
+
+<script src="vendor/echarts.min.js"></script>
+<script src="data.js"></script>
+<script src="sim.js"></script>
+<script src="charts.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
