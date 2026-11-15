@@ -143,3 +143,39 @@ body {
   .reset { display: none; }
   .data-error { -webkit-line-clamp: 1; }
 }
+
+/* ---------- 좁은 화면(휴대폰·세로 태블릿): 한 화면 고정 배치를 풀고 위에서 아래로 쌓아 스크롤한다 ---------- */
+@media (max-width: 900px) {
+  html, body { height: auto; }
+  body { overflow: auto; }
+  .app { display: block; height: auto; }
+
+  .rail { padding: 16px; gap: 14px; }
+  .levers { gap: 16px; }
+  .group { gap: 12px; }
+  .group h3 { flex-wrap: wrap; }
+  .lever-meta { white-space: normal; }
+  .lever input[type=range] { height: 28px; }   /* 손가락으로 잡기 쉬운 높이 */
+  .reset { display: block; padding: 10px; }
+
+  .stage {
+    padding: 12px; gap: 10px;
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: none;
+    grid-template-areas: "k" "d" "m" "w" "t" "f" "n";
+  }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .kpi { padding: 10px 12px; }
+  .kpi:last-child { grid-column: 1 / -1; }
+  .kpi h2, .kpi .sub { white-space: normal; }
+  .kpi .value { font-size: clamp(20px, 6.4vw, 30px); }
+  .kpi .delta { margin-left: 4px; white-space: nowrap; }
+
+  .panel { padding: 12px 12px 8px; }
+  .panel header { flex-wrap: wrap; gap: 2px 12px; }
+  .panel h2, .panel header p { white-space: normal; }
+  .chart { flex: none; height: 260px; }
+  .panel-dots .chart { height: 220px; }
+  .legend { margin-top: 6px; gap: 4px 14px; }
+  .legend .size-note { margin-left: 0; }
+  .notice { line-height: 1.5; padding-bottom: 8px; }
+}

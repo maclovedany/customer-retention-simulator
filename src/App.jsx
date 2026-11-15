@@ -59,7 +59,7 @@ function Kpis({ r, months }) {
 // 흐름도(sankey)는 ECharts가 갱신 때 통째로 다시 그려 전환이 없다. 값을 직접 보간해 프레임마다 다시 그린다.
 function FlowChart({ flow, theme }) {
   const shown = useTween(flow);
-  const build = useCallback(() => flowOption({ flow: shown }, theme), [shown, theme]);
+  const build = useCallback(size => flowOption({ flow: shown }, theme, size), [shown, theme]);
   return <EChart build={build} replace label="자발 해지 요청의 상담과 방어 흐름" />;
 }
 

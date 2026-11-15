@@ -151,7 +151,9 @@ export function typesOption(r, t) {
 }
 
 // ---------- 5. 해지 요청 흐름
-export function flowOption(r, t) {
+// 좁은 화면에서는 이름표가 다음 단계 막대와 겹치므로 이름과 건수를 두 줄로 나눈다
+export function flowOption(r, t, size) {
+  var gap = size && size.width < 420 ? '\n' : ' ';
   var f = r.flow, total = { '자발 해지 요청': f.requests, '상담 진행': f.consulted, '미상담': f.notConsulted,
                             '방어 성공': f.saved, '해지': f.churnedAfterConsult + f.notConsulted };
   var links = [
@@ -173,7 +175,7 @@ export function flowOption(r, t) {
       data: Object.keys(total).filter(function (n) { return used[n]; }).map(function (n) { return { name: n, itemStyle: { color: fill[n] } }; }),
       links: links.map(function (l) { return { source: l[0], target: l[1], value: l[2] }; }),
       lineStyle: { color: 'target', opacity: 0.28, curveness: 0.5 },
-      label: { fontSize: t.fs, color: t.colors.ink, formatter: function (p) { return p.name + ' ' + one(total[p.name]); } }
+      label: { fontSize: t.fs, lineHeight: t.fs * 1.25, color: t.colors.ink, formatter: function (p) { return p.name + gap + one(total[p.name]); } }
     }]
   };
 }
