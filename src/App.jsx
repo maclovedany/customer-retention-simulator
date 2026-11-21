@@ -5,15 +5,11 @@ import { dotOrderOf, dotsOption, flowOption, monthlyOption, readTheme, STATUS_LA
 import { man, one, pct, won } from './lib/format.js';
 import { loadData } from './lib/loadData.js';
 import { levers as leversOf, presets as presetsOf, run } from './lib/sim.js';
+import { parseQuery, toQuery } from './lib/urlState.js';
 import useTween from './lib/useTween.js';
 
 const SUPABASE = { url: import.meta.env.VITE_SUPABASE_URL || '', key: import.meta.env.VITE_SUPABASE_ANON_KEY || '' };
 const loadSnapshot = () => import('./data/raw.json').then(m => m.default);
-const PRESET_NAMES = ['current', 'conservative', 'base', 'aggressive'];
-const startPreset = () => {
-  const p = new URLSearchParams(window.location.search).get('preset');
-  return PRESET_NAMES.includes(p) ? p : 'current';
-};
 
 function Kpi({ title, value, sub, delta, good, money, active }) {
   return (
@@ -51,7 +47,7 @@ function Kpis({ r, months }) {
       <Kpi money title="방어한 월 매출 (MRR)" value={won(kpi.savedMrr)} active={kpi.savedMrr > 0}
         sub={`해지로 잃던 ${won(r.churnMrr.base)} 중 ${pct(r.churnMrr.base ? kpi.savedMrr / r.churnMrr.base : 0, 0)}`} />
       <Kpi money title={`${months}개월 누적 방어 매출`} value={won(kpi.savedRevenue)} active={kpi.savedRevenue > 0}
-        sub={`방어 기업 ${one(kpi.savedCount)}개사의 남은 기간 구독료`} />
+        sub={`방어 ${one(kpi.savedCount)}개사, 월 이탈 ${pct(r.baseline.monthlyChurn, 2)} 반영`} />
     </section>
   );
 }
@@ -67,8 +63,9 @@ function Dashboard({ data, load, loading, onReload }) {
   const levers = useMemo(() => leversOf(data.refs), [data]);
   const presets = useMemo(() => presetsOf(data.refs), [data]);
   const dotOrder = useMemo(() => dotOrderOf(data), [data]);
-  const [preset, setPreset] = useState(startPreset);
-  const [values, setValues] = useState(() => presets[startPreset()]);
+  const [start] = useState(() => parseQuery(window.location.search, levers, presets));
+  const [preset, setPreset] = useState(start.preset);
+  const [values, setValues] = useState(start.values);
   const [theme, setTheme] = useState(readTheme);
 
   // 데이터를 다시 불러오면 참고값이 바뀔 수 있다: 프리셋이면 새 값으로, 직접 조정한 값이면 범위 안으로 맞춘다
@@ -82,6 +79,12 @@ function Dashboard({ data, load, loading, onReload }) {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  // 지금 상태를 주소에 담아 새로고침하거나 링크로 넘겨도 같은 화면이 뜨게 한다. 슬라이더를 끄는 동안에는 멈춘 뒤 한 번만 쓴다.
+  useEffect(() => {
+    const id = setTimeout(() => window.history.replaceState(null, '', window.location.pathname + toQuery(preset, values, levers)), 300);
+    return () => clearTimeout(id);
+  }, [preset, values, levers]);
 
   const onLever = useCallback((key, v) => { setPreset(null); setValues(prev => ({ ...prev, [key]: v })); }, []);
   const onPreset = useCallback(name => { setPreset(name); setValues(presets[name]); }, [presets]);
@@ -130,7 +133,7 @@ function Dashboard({ data, load, loading, onReload }) {
         </Panel>
 
         <Panel area="types" title="해지 유형별 기업 수"
-          summary={best.base - best.sim > 0.05 ? <>가장 많이 줄어든 유형 <b>{best.type} −{one(best.base - best.sim)}</b></> : '전략 적용 전'}>
+          summary={best.base - best.sim > 0.05 ? <>최대 감소 <b>{best.type} −{one(best.base - best.sim)}</b></> : '전략 적용 전'}>
           <EChart build={buildTypes} label="해지 유형별 기업 수, 현재와 전략 적용 후" />
         </Panel>
 

@@ -124,6 +124,15 @@ function run(data, values) {
   var churnedCount = 0, savedCount = 0, savedMrr = 0, savedRevenue = 0, baseMrr = 0;
   var annualBase = 0, annualSim = 0, saveProb = {};
 
+  // 방어된 기업도 남은 기간에 기준 월평균 이탈률만큼 줄어든다고 본다: 남은 n개월의 기대 유지 개월 수
+  var keep = 1 - ratio(data.monthly.reduce(function (a, m) { return a + m.churned; }, 0),
+                       data.monthly.reduce(function (a, m) { return a + m.active; }, 0));
+  var stayMonths = function (n) {
+    var total = 0, alive = 1;
+    for (var j = 0; j < n; j += 1) { alive *= keep; total += alive; }
+    return total;
+  };
+
   firms.forEach(function (f) {
     if (!f.churned) return;
     var p = probabilities(f, values, refs), survive = 1, sum = 0;
@@ -137,7 +146,7 @@ function run(data, values) {
       g.firms += share; g.mrr += money; firmMrr += money;
     });
     saveProb[f.id] = s;
-    churnedCount += 1 - s; savedCount += s; savedMrr += firmMrr; savedRevenue += firmMrr * left; baseMrr += f.mrr;
+    churnedCount += 1 - s; savedCount += s; savedMrr += firmMrr; savedRevenue += firmMrr * stayMonths(left); baseMrr += f.mrr;
     if (f.type in typeBase) { typeBase[f.type] += 1; typeSim[f.type] += 1 - s; }
     if (idx >= 0) { simChurnByMonth[idx] += 1 - s; savedByMonth[idx] += s; }
     if (f.cycle === '연') { annualBase += 1; annualSim += 1 - s; }

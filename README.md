@@ -15,6 +15,7 @@ npm run build && npm run preview   # 배포본 확인. 인터넷 없이도 이 �
 ```
 
 주소 뒤에 `?preset=base`(또는 `conservative`, `aggressive`)를 붙이면 그 시나리오로 시작합니다.
+슬라이더를 직접 조정하면 주소가 `?salary=44&pause=29…`처럼 레버 값(퍼센트)으로 바뀌므로, 그 주소를 복사하면 같은 상태를 다시 띄우거나 공유할 수 있습니다.
 
 ## Supabase 준비
 
@@ -67,6 +68,7 @@ cd tools && uv run -q --with pandas --with openpyxl python -I test_build_data.py
 | `src/lib/loadData.js` | Supabase에서 표 4개를 읽고, 실패하면 내장 데이터로 대체 |
 | `src/lib/buildData.js` | 원자료 정제, 해지 유형 분류, 참고값 계산 |
 | `src/lib/sim.js` | 레버 값으로 지표를 계산하는 순수 함수 |
+| `src/lib/urlState.js` | 주소의 쿼리와 프리셋·레버 값 변환 |
 | `src/lib/chartOptions.js` | 차트 5개의 옵션 |
 | `src/App.jsx`, `src/components/` | 화면 |
 | `docs/설계안.md` | 설계와 계산식 |

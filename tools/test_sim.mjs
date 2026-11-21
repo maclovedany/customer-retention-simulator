@@ -89,6 +89,18 @@ onlyLast.firms.forEach(f => { if (f.churned && f.churnMonth !== lastMonth) { f.c
 r = Sim.run(onlyLast, maxed);
 assert.ok(r.kpi.savedMrr > 0); assert.equal(r.kpi.savedRevenue, 0);
 
+// 6-3 누적 방어 매출: 방어된 기업도 남은 기간에 기준 월평균 이탈률만큼 줄어든다고 본다
+r = Sim.run(D, { ...P.current, payRecovery: 0.5, rechurn: 0 });
+const keep = 1 - r.baseline.monthlyChurn, lastIdx = D.meta.months.length - 1;
+let withDecay = 0, noDecay = 0;
+D.firms.filter(f => f.churned && f.type === '결제 실패형').forEach(f => {
+  const left = lastIdx - D.meta.months.indexOf(f.churnMonth);
+  for (let j = 1; j <= left; j += 1) withDecay += 0.5 * f.mrr * keep ** j;
+  noDecay += 0.5 * f.mrr * left;
+});
+near(r.kpi.savedRevenue, withDecay, 1e-3);
+assert.ok(r.kpi.savedRevenue < noDecay);
+
 // 7 프리셋 값 (현재 파일 기준)
 assert.equal(P.base.payRecovery, 0.46); assert.equal(P.base.salary, 0.44); assert.equal(P.base.consultRate, 1);
 assert.equal(P.conservative.consultRate, 0.80); assert.equal(P.conservative.salary, 0.22);
