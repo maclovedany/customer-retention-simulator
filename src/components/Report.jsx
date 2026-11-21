@@ -27,6 +27,49 @@ function Bars({ title, unit, items }) {
   );
 }
 
+// 긴 표·열 이름은 밑줄 뒤에서만 줄이 바뀌게 한다
+const breakable = text => text.split('_').flatMap((part, i) => (i ? [<wbr key={i} />, '_' + part] : [part]));
+
+function SchemaSide({ side, cls }) {
+  return (
+    <div className={`r-side ${cls}`}>
+      <h3>{side.title}<span>{side.sub}</span></h3>
+      <div className="r-groups">
+        {side.groups.map(g => (
+          <section key={g.label} className={g.added ? 'added' : undefined}>
+            <h4>{g.label}</h4>
+            <div className="r-tables">
+              {g.tables.map(t => (
+                <div key={t.name} className={'r-tb' + (t.changed ? ' changed' : '')}>
+                  <div className="r-tn"><span>{breakable(t.name)}</span>{t.no && <em>{t.no}</em>}</div>
+                  {t.cols.map(c => (Array.isArray(c)
+                    ? <div key={c[0]} className="r-tc changed">{breakable(c[0])}</div>
+                    : <div key={c} className="r-tc">{breakable(c)}</div>))}
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+      <p>{side.note}</p>
+    </div>
+  );
+}
+
+// 표 구조의 전/후 비교. 빨간 테두리가 바뀌는 부분이고 번호가 좌우로 대응한다.
+function Schema({ caption, before, after, changes }) {
+  return (
+    <figure className="r-schema">
+      <figcaption>{caption} <b>빨간 테두리</b>가 바뀌는 부분이고, 번호는 좌우로 대응합니다.</figcaption>
+      <div className="r-sides">
+        <SchemaSide side={before} cls="before" />
+        <SchemaSide side={after} cls="after" />
+      </div>
+      <ol>{changes.map(([no, text]) => <li key={no}><em>{no}</em>{text}</li>)}</ol>
+    </figure>
+  );
+}
+
 function Block({ b }) {
   if (b.h) return <h2>{b.h}</h2>;
   if (b.p) return <p>{b.p}</p>;
@@ -40,6 +83,7 @@ function Block({ b }) {
     );
   }
   if (b.table) return <Table {...b.table} />;
+  if (b.schema) return <Schema {...b.schema} />;
   return <Bars {...b.bars} />;
 }
 

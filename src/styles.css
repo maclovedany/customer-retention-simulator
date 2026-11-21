@@ -186,6 +186,34 @@ body {
 .r-bar b.top { background: var(--saved); }
 .r-bar strong { text-align: right; font-weight: 700; }
 
+/* 표 구조 전/후 비교 */
+.r-schema { margin: 14px 0; display: grid; gap: 12px; }
+.r-schema figcaption { font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); }
+.r-schema figcaption b { color: var(--churned); border: 2px solid var(--churned); border-radius: 4px; padding: 0 5px; font-weight: 700; }
+.r-sides { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 12px; align-items: stretch; }
+.r-side { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.r-side h3 { margin: 0; font-size: 16px; font-weight: 800; }
+.r-side h3 span { font-size: 13px; font-weight: 500; color: var(--ink-soft); margin-left: 8px; }
+.r-side > p { margin: auto 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+.r-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.r-side.after .r-groups { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.r-side.after .r-groups section.added { grid-column: 1 / -1; }
+.r-groups section { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.r-groups section.added { border: 2px solid var(--churned); border-radius: 10px; padding: 8px; background: #fff6f8; }
+.r-groups section.added .r-tables { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+.r-groups h4 { margin: 0; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
+.r-tables { display: flex; flex-direction: column; gap: 6px; }
+.r-tb { border: 1px solid var(--line); border-radius: 6px; background: #fbfcfe; overflow: hidden; min-width: 0; }
+.r-tb.changed { border: 2px solid var(--churned); }
+.r-tn { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; padding: 4px 8px; background: #eef1f6; font: 700 12px/1.5 ui-monospace, "SF Mono", Menlo, monospace; }
+.r-tn span { min-width: 0; }
+.r-tn em, .r-schema ol em { font-style: normal; font-family: var(--font); font-size: 15px; line-height: 1.2; font-weight: 800; color: var(--churned); white-space: nowrap; }
+.r-tc { padding: 3px 8px; border-top: 1px solid #edf0f5; font: 12px/1.5 ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink-soft); }
+.r-tc.changed { border: 2px solid var(--churned); color: var(--churned); font-weight: 700; }
+.r-schema ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; max-width: none; }
+.r-schema ol li { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 13.5px; line-height: 1.5; }
+.r-schema ol em { margin-right: 8px; }
+
 /* 낮은 화면(1366×768 등)에서는 조작부가 넘치지 않게 줄인다. '현재' 프리셋이 되돌리기와 같은 일을 한다. */
 @media (max-height: 820px) {
   .reset { display: none; }
@@ -201,6 +229,9 @@ body {
   .app { display: block; }
   .report { overflow: visible; }
   .r-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .r-sides, .r-schema ol { grid-template-columns: minmax(0, 1fr); }
+  .r-groups, .r-side.after .r-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .r-groups section.added .r-tables { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .r-stats > div { padding: 12px 14px; }
   .r-stats strong { font-size: 24px; }
 

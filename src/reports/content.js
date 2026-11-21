@@ -1,6 +1,7 @@
 // 보고서 화면의 본문. 팀 분석 보고서(2026-11-15, 내장 데이터 기준)를 화면용으로 간추린 것이다.
 // 블록: { h } 소제목 · { p } 문단 · { stats } 큰 숫자 · { table } 표 · { bars } 가로 막대 · { note } 해석 상자 · { list } 목록
 // table.num은 오른쪽 정렬할 열 번호, bars.items는 [이름, 값].
+// { schema } 는 표 구조의 전/후 비교. 표는 { name, no, changed, cols }, 열은 문자열 또는 [문자열, true(바뀌는 열)].
 
 const churn = {
   id: 'churn', menu: '해지 원인·유형 분석', title: '해지 원인·유형 분석 보고서',
@@ -232,6 +233,65 @@ const billing = {
     ] } },
     { h: '3. 결제 구조 분리' },
     { p: '현재 구조는 개인 결제와 기업 결제가 한데 섞인 "사람이 이용권을 한 번 사는 구조"입니다. 계정은 함께 쓰되 기업 결제를 별도 영역으로 분리하고, 구독과 결제수단을 사람이 아니라 회사에 귀속시킵니다.' },
+    { schema: {
+      caption: '결제 스키마(데이터베이스의 표와 열 구조) 전/후 비교. 원본을 단순화했고, 표와 열 이름은 실제 구조를 재구성한 예시입니다.',
+      before: {
+        title: '현재', sub: '개인·기업 통합 결제 (10년 된 구조)',
+        note: '사람이 이용권을 한 번 사는 구조. 구독·갱신·재시도 개념이 없음',
+        groups: [
+          { label: '계정', tables: [
+            { name: 'users', no: '①', cols: [['user_type · company_id', true], 'card_token', 'dormant_at'] },
+            { name: 'companies', no: '①', cols: [['manager_user_id', true], 'card_token'] },
+            { name: 'company_users', no: '①', changed: true, cols: ['퇴사 시 고아 레코드'] },
+          ] },
+          { label: '주문', tables: [
+            { name: 'orders', no: '④', cols: ['user_id · company_id', 'status · pg_type', ['failed_count', true]] },
+            { name: 'company_orders', no: '②', changed: true, cols: ['orders와 이중 기록', '계약 조건은 메모로 입력'] },
+            { name: 'legacy_orders', no: '⑥', changed: true, cols: ['2018년 이관 실패의 잔재'] },
+            { name: 'refunds', cols: ['부분 환불 수기 계산'] },
+          ] },
+          { label: '이용권 · 정기결제', tables: [
+            { name: 'vouchers', no: '③', cols: ['user_id', ['expired_at', true]] },
+            { name: 'billings_wip', no: '⑤', changed: true, cols: ['발급만 하고 안 쓰는 빌링키'] },
+            { name: 'custom_prices', no: '⑤', changed: true, cols: ['계약가를 직접 수정'] },
+            { name: 'coupons', cols: ['계약 할인을 쿠폰으로 우회'] },
+          ] },
+        ],
+      },
+      after: {
+        title: '분리 후', sub: '개인 결제 / 기업 결제(Billing) 분리',
+        note: '구독과 결제수단을 사람이 아니라 회사에 귀속. 결제 실패는 7일 안에 복구',
+        groups: [
+          { label: '공통 계정', tables: [
+            { name: 'users', cols: ['email · name', '로그인·인증만 담당'] },
+            { name: 'companies', cols: ['name · biz_no'] },
+            { name: 'company_members', no: '①', changed: true, cols: ['company_id · user_id', 'role', 'left_at'] },
+          ] },
+          { label: '개인 결제 (기존 유지)', tables: [
+            { name: 'products', cols: ['price · duration_days'] },
+            { name: 'orders', cols: ['user_id · status'] },
+            { name: 'vouchers', cols: ['order_id', 'starts_at · ends_at'] },
+            { name: 'refunds', cols: ['amount · reason'] },
+          ] },
+          { label: '기업 결제 (신규, billing_ 로 시작하는 표)', added: true, tables: [
+            { name: 'subscriptions', no: '②③⑤', cols: ['company_id · plan_id', 'status', 'payment_method', 'contract_price', 'seats'] },
+            { name: 'invoices', no: '②', cols: ['status', 'paid_via', 'deposit_confirmed_at', 'dunning_count', 'tax_invoice_no'] },
+            { name: 'payment_attempts', no: '④', cols: ['attempt_no (1 · 3 · 7일 뒤)', 'result', 'next_retry_at'] },
+            { name: 'keys', no: '⑤', cols: ['company_id', 'is_default'] },
+            { name: 'subscription_events', no: '③', cols: ['일시정지 · 재개 · 요금제 변경'] },
+            { name: 'plans', cols: ['monthly_price · yearly_price', 'seat_limit'] },
+          ] },
+        ],
+      },
+      changes: [
+        ['①', '개인/기업 분기 제거. 회사 구성원 표에 역할과 퇴사일을 기록해 담당자가 바뀌어도 구독 유지'],
+        ['②', '주문 이중 기록 제거. 구독과 청구 내역으로 한 번만 기록'],
+        ['③', '만료 후 재구매 대신 구독 상태로 갱신과 일시정지 처리'],
+        ['④', '결제 실패 횟수만 세던 것을 시도 내역으로 바꿔 1·3·7일 뒤 자동 재시도'],
+        ['⑤', '카드 정보와 계약가를 회사에 귀속된 데이터로 기록'],
+        ['⑥', '쓰지 않는 표는 이관 후 제거'],
+      ],
+    } },
     { table: { head: ['현재 구조', '분리 후 구조', '효과'], rows: [
       ['회원 유형 값으로 개인과 기업 구분', '회사 구성원 표에 역할과 퇴사일 기록', '개인/기업 분기 제거, 담당자가 바뀌어도 구독 유지'],
       ['기업 주문을 두 표에 이중 기록', '구독과 청구 내역으로 한 번만 기록', '데이터 불일치 제거'],
