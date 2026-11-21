@@ -72,7 +72,7 @@ export default function Rail({ data, load, loading, levers, values, preset, onLe
   return (
     <aside className="rail" aria-label="전략 조작부">
       <div className="rail-head">
-        <h1>해지 방어 전략<br />시뮬레이터</h1>
+        <h1>해지 방어 전략 시뮬레이터</h1>
         <p>{data.firms.length}개 기업, {months[0].replace('-', '.')}~{months[months.length - 1].replace('-', '.')} 구독 데이터</p>
         <DataStatus load={load} loading={loading} onReload={onReload} />
       </div>

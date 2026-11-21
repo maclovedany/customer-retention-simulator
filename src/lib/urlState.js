@@ -13,6 +13,12 @@ export function parseQuery(search, levers, presets) {
   return { preset: name, values: presets[name] };
 }
 
+// 보고 있는 화면. ?view=churn 같은 값이 없거나 모르는 값이면 기본 화면(fallback)
+export function viewOf(search, ids, fallback) {
+  const v = new URLSearchParams(search).get('view');
+  return ids.includes(v) ? v : fallback;
+}
+
 export function toQuery(preset, values, levers) {
   if (preset === 'current') return '';
   if (preset) return `?preset=${preset}`;

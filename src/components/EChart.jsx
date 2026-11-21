@@ -17,6 +17,7 @@ export default function EChart({ build, replace = false, label }) {
     chart.current = echarts.init(box.current);
     const measure = () => {
       const { clientWidth: width, clientHeight: height } = box.current;
+      if (!width || !height) return;   // 보고서 화면을 보는 동안 숨겨진 상태
       chart.current.resize();
       setSize(s => (s && s.width === width && s.height === height ? s : { width, height }));
     };

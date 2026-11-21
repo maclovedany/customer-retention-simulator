@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as Sim from '../src/lib/sim.js';
 import { buildData } from '../src/lib/buildData.js';
-import { parseQuery, toQuery } from '../src/lib/urlState.js';
+import { parseQuery, toQuery, viewOf } from '../src/lib/urlState.js';
 
 const D = buildData(JSON.parse(readFileSync(new URL('../src/data/raw.json', import.meta.url), 'utf8')));
 const L = Sim.levers(D.refs), P = Sim.presets(D.refs);
@@ -35,5 +35,11 @@ assert.equal(part.values.salary, P.current.salary); assert.equal(part.values.sav
 
 // 5 레버 값이 있으면 preset보다 우선한다
 assert.equal(parseQuery('?preset=base&pause=10', L, P).preset, null);
+
+// 6 화면 선택: 아는 값이면 그 화면, 없거나 모르는 값이면 기본 화면
+const IDS = ['churn', 'usage', 'plan'];
+assert.equal(viewOf('?view=churn', IDS, 'plan'), 'churn');
+assert.equal(viewOf('', IDS, 'plan'), 'plan');
+assert.equal(viewOf('?view=nope&preset=base', IDS, 'plan'), 'plan');
 
 console.log('OK');

@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import EChart from './components/EChart.jsx';
 import Rail from './components/Rail.jsx';
+import Report from './components/Report.jsx';
 import { dotOrderOf, dotsOption, flowOption, monthlyOption, readTheme, STATUS_LABEL, typesOption, waterfallOption } from './lib/chartOptions.js';
 import { man, one, pct, won } from './lib/format.js';
 import { loadData } from './lib/loadData.js';
 import { levers as leversOf, presets as presetsOf, run } from './lib/sim.js';
-import { parseQuery, toQuery } from './lib/urlState.js';
+import { parseQuery, toQuery, viewOf } from './lib/urlState.js';
+import { PLAN, REPORTS, VIEWS } from './reports/content.js';
 import useTween from './lib/useTween.js';
 
 const SUPABASE = { url: import.meta.env.VITE_SUPABASE_URL || '', key: import.meta.env.VITE_SUPABASE_ANON_KEY || '' };
@@ -59,7 +61,7 @@ function FlowChart({ flow, theme }) {
   return <EChart build={build} replace label="자발 해지 요청의 상담과 방어 흐름" />;
 }
 
-function Dashboard({ data, load, loading, onReload }) {
+function Dashboard({ data, load, loading, onReload, active }) {
   const levers = useMemo(() => leversOf(data.refs), [data]);
   const presets = useMemo(() => presetsOf(data.refs), [data]);
   const dotOrder = useMemo(() => dotOrderOf(data), [data]);
@@ -81,10 +83,12 @@ function Dashboard({ data, load, loading, onReload }) {
   }, []);
 
   // 지금 상태를 주소에 담아 새로고침하거나 링크로 넘겨도 같은 화면이 뜨게 한다. 슬라이더를 끄는 동안에는 멈춘 뒤 한 번만 쓴다.
+  // 보고서 화면을 보는 동안에는 주소를 건드리지 않고, 돌아오면 다시 쓴다.
   useEffect(() => {
+    if (!active) return undefined;
     const id = setTimeout(() => window.history.replaceState(null, '', window.location.pathname + toQuery(preset, values, levers)), 300);
     return () => clearTimeout(id);
-  }, [preset, values, levers]);
+  }, [preset, values, levers, active]);
 
   const onLever = useCallback((key, v) => { setPreset(null); setValues(prev => ({ ...prev, [key]: v })); }, []);
   const onPreset = useCallback(name => { setPreset(name); setValues(presets[name]); }, [presets]);
@@ -104,7 +108,7 @@ function Dashboard({ data, load, loading, onReload }) {
   const buildTypes = useCallback(() => typesOption(r, theme), [r, theme]);
 
   return (
-    <div className="app">
+    <div className="app" hidden={!active}>
       <Rail data={data} load={load} loading={loading} levers={levers} values={values} preset={preset}
         onLever={onLever} onPreset={onPreset} onReload={onReload} />
       <main className="stage">
@@ -148,7 +152,32 @@ function Dashboard({ data, load, loading, onReload }) {
   );
 }
 
+// 화면 맨 위 메뉴: 보고서 5종과 시뮬레이터(해지 방어 전략 실행안)를 오간다.
+function TopNav({ view, onGo }) {
+  const nav = useRef(null);
+  // 좁은 화면에서는 메뉴가 가로로 넘친다: 고른 메뉴가 보이는 자리로 오게 한다
+  useEffect(() => {
+    nav.current.querySelector('[aria-current]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [view]);
+  return (
+    <header className="topbar">
+      <strong>구독 유지 전략</strong>
+      <nav aria-label="산출물" ref={nav}>
+        {VIEWS.map((v, i) => (
+          <button key={v.id} type="button" aria-current={view === v.id ? 'page' : undefined} onClick={() => onGo(v.id)}>
+            <i>{i + 1}</i>{v.menu}
+          </button>
+        ))}
+      </nav>
+    </header>
+  );
+}
+
+const VIEW_IDS = VIEWS.map(v => v.id);
+
 export default function App() {
+  const [view, setView] = useState(() => viewOf(window.location.search, VIEW_IDS, PLAN.id));
+  const [planSeen, setPlanSeen] = useState(view === PLAN.id);   // 시뮬레이터는 처음 열 때 만들고, 그 뒤로는 레버 값을 간직한 채 숨겨 둔다
   const [load, setLoad] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fatal, setFatal] = useState(null);
@@ -162,8 +191,22 @@ export default function App() {
   }, []);
   useEffect(reload, [reload]);
 
-  if (!load) {
-    return <div className="loading"><p>{fatal ? `데이터를 읽지 못했습니다. ${fatal}` : '데이터를 불러오는 중입니다.'}</p></div>;
-  }
-  return <Dashboard data={load.data} load={load} loading={loading} onReload={reload} />;
+  const go = useCallback(id => {
+    setView(id);
+    if (id === PLAN.id) setPlanSeen(true);
+    else window.history.replaceState(null, '', `${window.location.pathname}?view=${id}`);
+    window.scrollTo(0, 0);
+  }, []);
+
+  const report = REPORTS.find(r => r.id === view);
+  return (
+    <div className="shell">
+      <TopNav view={view} onGo={go} />
+      {report && <Report key={report.id} report={report} />}
+      {planSeen && load && <Dashboard data={load.data} load={load} loading={loading} onReload={reload} active={view === PLAN.id} />}
+      {view === PLAN.id && !load && (
+        <div className="loading"><p>{fatal ? `데이터를 읽지 못했습니다. ${fatal}` : '데이터를 불러오는 중입니다.'}</p></div>
+      )}
+    </div>
+  );
 }

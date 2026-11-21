@@ -1,6 +1,7 @@
 # 구독 유지·해지 방어 전략 시뮬레이터
 
 전략 레버를 움직이면 400개 기업의 유지율·해지율·매출 변화가 지표와 차트에 바로 반영되는 발표 시연용 페이지입니다.
+화면 위 메뉴로 분석 보고서 5종(해지 원인·유형, 이용 행태·HR 니즈, 채용 외 HR 서비스 기획, 연봉 데이터 분석 서비스, 결제·구독 시스템 개선)과 시뮬레이터(해지 방어 전략 실행안)를 오갑니다.
 교육용 가상 데이터를 사용하며, 효과 크기는 가정입니다.
 
 React(Vite)로 만들었고 원자료는 Supabase의 표 4개에서 읽습니다. Supabase에 연결할 수 없으면 내장 데이터로 동작합니다.
@@ -15,6 +16,7 @@ npm run build && npm run preview   # 배포본 확인. 인터넷 없이도 이 �
 ```
 
 주소 뒤에 `?preset=base`(또는 `conservative`, `aggressive`)를 붙이면 그 시나리오로 시작합니다.
+보고서는 `?view=churn`(또는 `usage`, `service`, `salary`, `billing`)으로 바로 열 수 있습니다.
 슬라이더를 직접 조정하면 주소가 `?salary=44&pause=29…`처럼 레버 값(퍼센트)으로 바뀌므로, 그 주소를 복사하면 같은 상태를 다시 띄우거나 공유할 수 있습니다.
 
 ## Supabase 준비
@@ -70,5 +72,6 @@ cd tools && uv run -q --with pandas --with openpyxl python -I test_build_data.py
 | `src/lib/sim.js` | 레버 값으로 지표를 계산하는 순수 함수 |
 | `src/lib/urlState.js` | 주소의 쿼리와 프리셋·레버 값 변환 |
 | `src/lib/chartOptions.js` | 차트 5개의 옵션 |
-| `src/App.jsx`, `src/components/` | 화면 |
+| `src/reports/content.js` | 보고서 5종의 본문 (팀 분석 보고서를 화면용으로 간추린 것. 수치는 2026-11-15 내장 데이터 기준) |
+| `src/App.jsx`, `src/components/` | 화면 (상단 메뉴, 시뮬레이터, 보고서) |
 | `docs/설계안.md` | 설계와 계산식 |
